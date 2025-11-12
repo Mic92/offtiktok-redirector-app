@@ -1,0 +1,314 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version_name: ${{ steps.version.outputs.version_name }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      should_deploy: ${{ steps.version.outputs.should_deploy }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Calculate version
+      id: version
+      run: |
+        # Determine if we should deploy (main branch or tag)
+        if [[ "$GITHUB_REF" == "refs/heads/main" ]] || [[ "$GITHUB_REF" == "refs/heads/master" ]] || [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+        fi
+        
+        # Generate version based on context
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          # Manual tag - use tag version
+          VERSION_NAME=${GITHUB_REF#refs/tags/v}
+          # Extract version code from tag or use timestamp
+          VERSION_CODE=$(date +%s)
+          echo "Version from tag: $VERSION_NAME"
+        else
+          # Auto-version based on date and time
+          # Format: YYYY.MMDD.HHMM (e.g., 2025.1112.1430)
+          DATE_VERSION=$(date -u +%Y.%m%d.%H%M)
+          VERSION_NAME="$DATE_VERSION"
+          # Version code: YYYYMMDDHHmm as integer (e.g., 202511121430)
+          VERSION_CODE=$(date -u +%Y%m%d%H%M)
+          echo "Auto-version: $VERSION_NAME (code: $VERSION_CODE)"
+        fi
+        
+        echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+        echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+        
+    - name: Update build.gradle with version
+      if: steps.version.outputs.should_deploy == 'true'
+      run: |
+        VERSION_NAME="${{ steps.version.outputs.version_name }}"
+        VERSION_CODE="${{ steps.version.outputs.version_code }}"
+        
+        # Update versionCode and versionName in build.gradle
+        sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
+        sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION_NAME\"/" app/build.gradle
+        
+        echo "Updated build.gradle:"
+        grep -A 2 "versionCode\|versionName" app/build.gradle
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Build Debug APK
+      if: steps.version.outputs.should_deploy == 'false'
+      run: ./gradlew assembleDebug
+      
+    - name: Build Release APK
+      if: steps.version.outputs.should_deploy == 'true'
+      run: ./gradlew assembleRelease
+      
+    - name: Sign Release APK
+      if: steps.version.outputs.should_deploy == 'true'
+      run: |
+        # Create keystore from secret
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+        
+        # Sign the APK
+        "${ANDROID_HOME}/build-tools/35.0.1/apksigner" sign \
+          --ks release.keystore \
+          --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+          --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+          --key-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+          --out app/build/outputs/apk/release/app-release-signed.apk \
+          app/build/outputs/apk/release/app-release-unsigned.apk
+        
+        # Clean up keystore
+        rm release.keystore
+        
+    - name: Rename APK with version
+      if: steps.version.outputs.should_deploy == 'true'
+      run: |
+        VERSION_NAME="${{ steps.version.outputs.version_name }}"
+        mv app/build/outputs/apk/release/app-release-signed.apk \
+           app/build/outputs/apk/release/TikTokRedirect-${VERSION_NAME}.apk
+        
+    - name: Upload Debug APK
+      if: steps.version.outputs.should_deploy == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+        
+    - name: Upload Release APK
+      if: steps.version.outputs.should_deploy == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-${{ steps.version.outputs.version_name }}
+        path: app/build/outputs/apk/release/TikTokRedirect-${{ steps.version.outputs.version_name }}.apk
+
+  deploy-fdroid:
+    needs: build
+    runs-on: ubuntu-latest
+    if: needs.build.outputs.should_deploy == 'true' && github.event_name != 'merge_group'
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Checkout gh-pages
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: gh-pages
+        
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
+      with:
+        pattern: app-release-*
+        path: apks
+        merge-multiple: true
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        
+    - name: Prepare F-Droid repository
+      run: |
+        mkdir -p gh-pages/fdroid/repo
+        VERSION_NAME="${{ needs.build.outputs.version_name }}"
+        VERSION_CODE="${{ needs.build.outputs.version_code }}"
+        
+        # Copy APK to fdroid repo with proper naming
+        cp apks/TikTokRedirect-${VERSION_NAME}.apk \
+           gh-pages/fdroid/repo/com.example.tiktokredirect_${VERSION_CODE}.apk
+        
+        echo "Deployed APK: com.example.tiktokredirect_${VERSION_CODE}.apk"
+        
+        # Keep only the latest 10 APKs to save space
+        cd gh-pages/fdroid/repo
+        find . -maxdepth 1 -name "com.example.tiktokredirect_*.apk" -type f -printf '%T@ %p\n' | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -v
+        cd ../../..
+
+        echo "Current APKs in repository:"
+        find gh-pages/fdroid/repo -maxdepth 1 -name "*.apk" -type f -printf '%T@ %p\n' | sort -rn | head -10 | cut -d' ' -f2-
+        
+    - name: Generate F-Droid repository index
+      run: |
+        cd gh-pages/fdroid
+        python ../../scripts/generate_fdroid_repo.py
+        
+    - name: Deploy to GitHub Pages
+      run: |
+        cd gh-pages
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        
+        VERSION_NAME="${{ needs.build.outputs.version_name }}"
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Deploy F-Droid repo for version ${VERSION_NAME}"
+          git push
+          echo "✅ Deployed to GitHub Pages"
+        fi
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: needs.build.outputs.should_deploy == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name != 'merge_group'
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
+      with:
+        pattern: app-release-*
+        path: apks
+        merge-multiple: true
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get commits since last release
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%an)" -10)
+        else
+          CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%an)")
+        fi
+        
+        # Save to file to handle multiline
+        echo "$CHANGELOG" > changelog.txt
+        
+    - name: Create or Update Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION_NAME: ${{ needs.build.outputs.version_name }}
+      run: |
+        CHANGELOG=$(cat changelog.txt)
+        APK_FILE="apks/TikTokRedirect-${VERSION_NAME}.apk"
+        RELEASE_TAG="v${VERSION_NAME}"
+        
+        # Check if release already exists
+        if gh release view "$RELEASE_TAG" &>/dev/null; then
+          echo "Release $RELEASE_TAG exists, updating..."
+          gh release upload "$RELEASE_TAG" "$APK_FILE" --clobber
+        else
+          echo "Creating new release $RELEASE_TAG..."
+          gh release create "$RELEASE_TAG" \
+            "$APK_FILE" \
+            --title "TikTok Redirect v${VERSION_NAME}" \
+            --notes "$(cat <<EOF
+        ## TikTok Redirect v${VERSION_NAME}
+
+        **Auto-released from main branch**
+
+        Download the APK below or add the F-Droid repository to your F-Droid client:
+
+        \`\`\`
+        https://Mic92.github.io/TikTokRedirect/fdroid/repo
+        \`\`\`
+
+        ### Recent Changes
+        ${CHANGELOG}
+
+        ### Installation
+        1. Download the APK above
+        2. Enable 'Install from Unknown Sources' on your device
+        3. Install and enjoy!
+
+        ### F-Droid
+        This release is also available through our F-Droid repository for automatic updates.
+        EOF
+          )"
+        fi
+        
+        echo "✅ Release published: $RELEASE_TAG"
+
+  create-manual-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: needs.build.outputs.should_deploy == 'true' && startsWith(github.ref, 'refs/tags/') && github.event_name != 'merge_group'
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
+      with:
+        pattern: app-release-*
+        path: apks
+        merge-multiple: true
+        
+    - name: Create Release for Tag
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          apks/TikTokRedirect-${{ needs.build.outputs.version_name }}.apk
+        body: |
+          ## TikTok Redirect ${{ github.ref_name }}
+          
+          Download the APK below or add the F-Droid repository:
+          
+          ```
+          https://Mic92.github.io/TikTokRedirect/fdroid/repo
+          ```
+          
+          ### Changes
+          See commit history for details.
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

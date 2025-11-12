@@ -1,0 +1,84 @@
+version: 2
+updates:
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automerge"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    reviewers:
+      - "Mic92"
+    # Group all GitHub Actions updates together
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Gradle dependencies
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "gradle"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "Mic92"
+    # Group related dependencies together
+    groups:
+      # Android SDK and build tools
+      android-sdk:
+        patterns:
+          - "com.android.tools.build:gradle"
+          - "com.android.tools:*"
+        update-types:
+          - "minor"
+          - "patch"
+      # AndroidX libraries
+      androidx:
+        patterns:
+          - "androidx.*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Kotlin
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin:*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Google/Material libraries
+      google-material:
+        patterns:
+          - "com.google.android.material:*"
+          - "com.google.code.*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore major version updates for stable core dependencies
+    ignore:
+      - dependency-name: "androidx.appcompat:appcompat"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.google.android.material:material"
+        update-types: ["version-update:semver-major"]
