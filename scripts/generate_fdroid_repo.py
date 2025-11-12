@@ -20,6 +20,9 @@ REPO_NAME = "TikTok Redirect F-Droid Repository"
 REPO_DESCRIPTION = "F-Droid repository for TikTok Redirect app - intercepts TikTok links and opens them in OffTikTok"
 REPO_URL = "https://Mic92.github.io/offtiktok-redirector-app/fdroid/repo"
 REPO_ICON = "icon.png"
+AUTHOR_NAME = "Jörg Thalheim"
+AUTHOR_EMAIL = "joerg@thalheim.io"
+AUTHOR_WEBSITE = "https://github.com/Mic92/offtiktok-redirector-app"
 
 
 def get_file_hash(filepath: Path, algorithm: str = "sha256") -> str:
@@ -212,6 +215,12 @@ def generate_index_xml(apks_info: list[dict[str, Any]]) -> ET.Element:
         tracker = ET.SubElement(app, "tracker")
         tracker.text = REPO_URL.replace("/fdroid/repo", "") + "/issues"
 
+        author = ET.SubElement(app, "author")
+        author.text = AUTHOR_NAME
+
+        email = ET.SubElement(app, "email")
+        email.text = AUTHOR_EMAIL
+
         # Add all package versions
         for version in versions:
             package = ET.SubElement(app, "package")
@@ -276,6 +285,9 @@ def generate_index_v1_json(apks_info: list[dict[str, Any]]) -> dict[str, Any]:
             "description": "TikTok Redirect automatically intercepts TikTok links and opens them in OffTikTok.\n\nFeatures:\n- Handles all TikTok domains\n- Opens in embedded WebView\n- Preserves URL parameters",
             "license": "Apache-2.0",
             "categories": ["Internet"],
+            "authorName": AUTHOR_NAME,
+            "authorEmail": AUTHOR_EMAIL,
+            "authorWebSite": AUTHOR_WEBSITE,
             "webSite": REPO_URL.replace("/fdroid/repo", ""),
             "sourceCode": REPO_URL.replace("/fdroid/repo", ""),
             "issueTracker": REPO_URL.replace("/fdroid/repo", "") + "/issues",
