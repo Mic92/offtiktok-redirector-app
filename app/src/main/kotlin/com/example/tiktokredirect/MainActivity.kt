@@ -1,93 +1,64 @@
 package com.example.tiktokredirect
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import com.example.tiktokredirect.databinding.ActivityMainBinding
 
-class MainActivity : ComponentActivity() {
-    private lateinit var binding: ActivityMainBinding
-    private val webView: WebView get() = binding.webView
-
+class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setupWebView()
-        setupBackNavigation()
         handleIntent(intent)
+        finish() // Close this activity after redirecting
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        intent?.let { handleIntent(it) }
-    }
-
-    private fun setupWebView() {
-        webView.apply {
-            webViewClient = WebViewClient()
-            webChromeClient = WebChromeClient()
-            settings.configureForRedirect()
+        intent?.let {
+            handleIntent(it)
+            finish()
         }
-    }
-
-    private fun setupBackNavigation() {
-        onBackPressedDispatcher.addCallback(
-            this,
-            object : androidx.activity.OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    if (webView.canGoBack()) {
-                        webView.goBack()
-                    } else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                    }
-                }
-            },
-        )
     }
 
     private fun handleIntent(intent: Intent) {
         when {
-            intent.isViewAction() -> handleTikTokUrl(intent.data)
-            else -> showWelcomeMessage()
+            intent.isViewAction() -> redirectTikTokUrl(intent.data)
+            intent.isSendAction() -> handleSharedText(intent)
+            else -> {
+                Toast.makeText(this, "No TikTok URL to redirect", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    private fun handleTikTokUrl(uri: Uri?) {
+    private fun redirectTikTokUrl(uri: Uri?) {
         uri?.let {
             val redirectedUrl = it.toString().redirectToOffTikTok()
-            Toast.makeText(this, "Opening in OffTikTok...", Toast.LENGTH_SHORT).show()
-            webView.loadUrl(redirectedUrl)
+            openInBrowser(redirectedUrl)
         }
     }
 
-    private fun showWelcomeMessage() {
-        webView.loadData(
-            """
-            <html>
-            <body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;text-align:center;'>
-                <div>
-                    <h2>TikTok Redirect</h2>
-                    <p>Click on any TikTok link to open it here!</p>
-                </div>
-            </body>
-            </html>
-            """.trimIndent(),
-            "text/html",
-            "UTF-8",
-        )
+    private fun handleSharedText(intent: Intent) {
+        intent.getStringExtra(Intent.EXTRA_TEXT)?.let { sharedText ->
+            val url = sharedText.trim()
+            if (url.contains("tiktok.com")) {
+                val redirectedUrl = url.redirectToOffTikTok()
+                openInBrowser(redirectedUrl)
+            } else {
+                Toast.makeText(this, "Not a TikTok URL", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    // Extension functions for better readability
+    private fun openInBrowser(url: String) {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        Toast.makeText(this, "Opening in OffTikTok...", Toast.LENGTH_SHORT).show()
+        startActivity(browserIntent)
+    }
+
     private fun Intent.isViewAction() = action == Intent.ACTION_VIEW && data != null
+
+    private fun Intent.isSendAction() = action == Intent.ACTION_SEND && type == "text/plain"
 
     private fun String.redirectToOffTikTok(): String =
         runCatching {
@@ -105,17 +76,6 @@ class MainActivity : ComponentActivity() {
             it.printStackTrace()
             this
         }
-
-    private fun WebSettings.configureForRedirect() {
-        javaScriptEnabled = true
-        domStorageEnabled = true
-        loadWithOverviewMode = true
-        useWideViewPort = true
-        builtInZoomControls = false
-        displayZoomControls = false
-        setSupportZoom(false)
-        defaultTextEncodingName = "utf-8"
-    }
 
     companion object {
         private val TIKTOK_DOMAIN_MAP =
