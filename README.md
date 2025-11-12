@@ -72,17 +72,15 @@ APK location: `app/build/outputs/apk/debug/app-debug.apk`
 
 ## 🔧 How It Works
 
-The app uses Android's Intent Filter system to register for TikTok URLs. When a link is clicked:
+The app uses Android's Intent Filter system to register for TikTok URLs:
 
-1. Android Intent Filter intercepts the TikTok URL
-2. App parses the URL using `Uri` class
-3. Replaces the domain with `offtiktok.com`
-4. Preserves all query parameters and fragments
-5. Loads in WebView with JavaScript enabled
+1. **Intent filters** register for tiktok.com domains
+2. When a TikTok link is clicked, Android shows chooser with your app
+3. App **parses the URL** and replaces domain with `offtiktok.com`
+4. **Preserves all** query parameters and URL fragments
+5. **Redirects to browser** - opens in your default browser (Firefox, Chrome, etc.)
+6. App **immediately closes** - no background processes
 
-## 📋 Permissions
-
-- **INTERNET**: Required for the WebView to load web content
 
 ## 🛠️ F-Droid Repository Structure
 
