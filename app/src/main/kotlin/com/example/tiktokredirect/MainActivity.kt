@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                         onBackPressedDispatcher.onBackPressed()
                     }
                 }
-            }
+            },
         )
     }
 
