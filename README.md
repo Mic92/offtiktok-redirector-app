@@ -18,18 +18,21 @@ Download the latest APK from [GitHub Releases](https://github.com/Mic92/offtikto
 ## Usage
 
 ### Clicking Links
+
 1. Click any TikTok link (in browser, messages, etc.)
 2. Android shows a chooser dialog
 3. Select "TikTok Redirect"
 4. Video opens in OffTikTok in your default browser
 
 ### Sharing URLs
+
 1. Find a TikTok link in any app
 2. Tap "Share"
 3. Select "TikTok Redirect"
 4. Opens in OffTikTok in your browser
 
 ### Setting as Default
+
 After selecting the app once, choose "Always" to skip the chooser in future.
 
 ## How It Works
@@ -117,6 +120,7 @@ nix develop
 ```
 
 Then add these 3 GitHub secrets (from script output):
+
 - `KEYSTORE_BASE64` - Base64-encoded keystore
 - `KEY_ALIAS` - Key alias (default: `tiktokredirect`)
 - `KEYSTORE_PASSWORD` - Password for the keystore and key
@@ -128,11 +132,13 @@ None! This app requires zero permissions - it only redirects URLs to your browse
 ## Troubleshooting
 
 ### App doesn't appear in chooser
+
 - Clear app defaults: Settings → Apps → TikTok Redirect → Open by default → Clear defaults
 - Clear browser defaults: Settings → Apps → Firefox/Chrome → Open by default → Clear defaults
 - Try clicking the TikTok link again
 
 ### Can't install APK
+
 - Enable "Install from Unknown Sources" in Android settings
 - Or use: `adb install app-debug.apk`
 
