@@ -2,6 +2,8 @@
 
 This Android app intercepts TikTok links and redirects them to OffTikTok (offtiktok.com) in a WebView.
 
+Status: Under development
+
 ## Features
 
 - Registers as a handler for TikTok links (tiktok.com, vm.tiktok.com, vt.tiktok.com)
