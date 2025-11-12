@@ -160,7 +160,7 @@ git push  # ← Automatically creates a release!
 **Version Format:**
 
 - Version Name: `YYYY.MMDD.HHMM` (e.g., `2025.1112.1430`)
-- Version Code: `YYYYMMDDHHmm` (integer for Android)
+- Version Code: Minutes since Unix epoch (e.g., `29382337`)
 
 #### Manual Releases (Optional)
 
