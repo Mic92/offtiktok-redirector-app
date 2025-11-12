@@ -12,18 +12,6 @@ Status: Under development
 
 ## 🚀 Quick Install
 
-### Option 1: F-Droid Repository (Recommended)
-
-Add this repository to your F-Droid client:
-
-```
-https://Mic92.github.io/offtiktok-redirector-app/fdroid/repo
-```
-
-**New releases are published automatically on every push to main!**
-
-### Option 2: Direct APK Download
-
 Download the latest APK from [GitHub Releases](https://github.com/Mic92/offtiktok-redirector-app/releases/latest)
 
 ## 📦 For Developers
@@ -81,53 +69,6 @@ The app uses Android's Intent Filter system to register for TikTok URLs:
 5. **Redirects to browser** - opens in your default browser (Firefox, Chrome, etc.)
 6. App **immediately closes** - no background processes
 
-
-## 🛠️ F-Droid Repository Structure
-
-```
-gh-pages/
-├── index.html              # User-facing page
-├── fdroid/
-│   ├── repo/
-│   │   ├── *.apk          # APK files
-│   │   ├── index.xml      # F-Droid index (legacy)
-│   │   └── index-v1.json  # F-Droid index (modern)
-│   └── icon.png           # Repository icon
-└── .nojekyll              # Prevent Jekyll processing
-```
-
-## 🐛 Troubleshooting
-
-### Build Issues
-
-- Ensure you have JDK 17 installed
-- Clear gradle cache: `./gradlew clean`
-- Invalidate caches in Android Studio
-
-### F-Droid Not Showing Updates
-
-- Check that GitHub Pages is enabled
-- Verify the repository URL is correct
-- Wait a few minutes after pushing updates
-- Try refreshing repositories in F-Droid
-
-### APK Signing Failed in CI
-
-- Verify all GitHub secrets are set correctly
-- Check that KEYSTORE_BASE64 is valid base64
-- Ensure passwords match your keystore
-
 ## 📄 License
 
 Apache-2.0
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## ⚠️ Notes
-
-- Requires Android 7.0 (API level 24) or higher
-- JavaScript is enabled in WebView for full functionality
-- Back button navigates through WebView history before closing
-- Keep your keystore and passwords secure - they cannot be recovered!
