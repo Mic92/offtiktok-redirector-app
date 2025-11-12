@@ -91,21 +91,6 @@
             '';
           };
 
-          # Minimal shell for CI - only what's needed for F-Droid index generation
-          devShells.ci = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              python3
-              androidComposition.androidsdk
-            ];
-
-            ANDROID_HOME = "${androidComposition.androidsdk}/libexec/android-sdk";
-            ANDROID_SDK_ROOT = "${androidComposition.androidsdk}/libexec/android-sdk";
-
-            shellHook = ''
-              export PATH="$ANDROID_HOME/build-tools/35.0.1:$PATH"
-            '';
-          };
-
           # treefmt configuration for `nix fmt`
           treefmt.config = {
             projectRootFile = "flake.nix";
