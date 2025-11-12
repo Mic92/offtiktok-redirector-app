@@ -164,7 +164,10 @@ jobs:
         mkdir -p gh-pages/fdroid/repo
         VERSION_NAME="${{ needs.build.outputs.version_name }}"
         VERSION_CODE="${{ needs.build.outputs.version_code }}"
-        
+
+        # Copy icon to repo directory (F-Droid expects it there)
+        cp gh-pages/fdroid/icon.png gh-pages/fdroid/repo/icon.png
+
         # Copy APK to fdroid repo with proper naming
         cp apks/TikTokRedirect-${VERSION_NAME}.apk \
            gh-pages/fdroid/repo/com.example.tiktokredirect_${VERSION_CODE}.apk
