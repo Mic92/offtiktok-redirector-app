@@ -17,14 +17,14 @@ Status: Under development
 Add this repository to your F-Droid client:
 
 ```
-https://Mic92.github.io/TikTokRedirect/fdroid/repo
+https://Mic92.github.io/offtiktok-redirector-app/fdroid/repo
 ```
 
 **New releases are published automatically on every push to main!**
 
 ### Option 2: Direct APK Download
 
-Download the latest APK from [GitHub Releases](https://github.com/Mic92/TikTokRedirect/releases/latest)
+Download the latest APK from [GitHub Releases](https://github.com/Mic92/offtiktok-redirector-app/releases/latest)
 
 ## 📦 For Developers
 
@@ -40,14 +40,14 @@ Download the latest APK from [GitHub Releases](https://github.com/Mic92/TikTokRe
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/Mic92/TikTokRedirect.git
-   cd TikTokRedirect
+   git clone https://github.com/Mic92/offtiktok-redirector-app.git
+   cd offtiktok-redirector-app
    ```
 
 2. **Open in Android Studio:**
    - Launch Android Studio
    - Select "Open an Existing Project"
-   - Navigate to the `TikTokRedirect` folder
+   - Navigate to the `offtiktok-redirector-app` folder
    - Click "OK"
 
 3. **Sync Gradle:**

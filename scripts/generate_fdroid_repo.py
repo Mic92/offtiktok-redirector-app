@@ -18,7 +18,7 @@ from xml.dom import minidom
 REPO_DIR = Path("repo")
 REPO_NAME = "TikTok Redirect F-Droid Repository"
 REPO_DESCRIPTION = "F-Droid repository for TikTok Redirect app - intercepts TikTok links and opens them in OffTikTok"
-REPO_URL = "https://Mic92.github.io/TikTokRedirect/fdroid/repo"
+REPO_URL = "https://Mic92.github.io/offtiktok-redirector-app/fdroid/repo"
 REPO_ICON = "icon.png"
 
 
