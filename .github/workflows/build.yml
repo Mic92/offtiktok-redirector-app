@@ -156,11 +156,9 @@ jobs:
         path: apks
         merge-multiple: true
         
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-        
+    - name: Install Nix
+      uses: cachix/install-nix-action@v30
+
     - name: Prepare F-Droid repository
       run: |
         mkdir -p gh-pages/fdroid/repo
@@ -184,7 +182,7 @@ jobs:
     - name: Generate F-Droid repository index
       run: |
         cd gh-pages/fdroid
-        python ../../scripts/generate_fdroid_repo.py
+        nix develop ${{ github.workspace }}#ci -c python ../../scripts/generate_fdroid_repo.py
         
     - name: Deploy to GitHub Pages
       run: |
