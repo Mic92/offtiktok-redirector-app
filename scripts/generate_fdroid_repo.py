@@ -255,6 +255,7 @@ def generate_index_v1_json(apks_info: list[dict[str, Any]]) -> dict[str, Any]:
 
     repo_data: dict[str, Any] = {
         "repo": {
+            "version": 20001,
             "name": REPO_NAME,
             "description": REPO_DESCRIPTION,
             "icon": REPO_ICON,
@@ -280,6 +281,8 @@ def generate_index_v1_json(apks_info: list[dict[str, Any]]) -> dict[str, Any]:
             "issueTracker": REPO_URL.replace("/fdroid/repo", "") + "/issues",
             "added": int(datetime.now().timestamp() * 1000),
             "lastUpdated": int(datetime.now().timestamp() * 1000),
+            "suggestedVersionCode": int(latest["versioncode"]),
+            "suggestedVersionName": latest["versionname"],
         }
 
         repo_data["apps"].append(app)
