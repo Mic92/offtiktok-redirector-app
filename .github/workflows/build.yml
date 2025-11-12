@@ -58,8 +58,9 @@ jobs:
           # Format: YYYY.MMDD.HHMM (e.g., 2025.1112.1430)
           DATE_VERSION=$(date -u +%Y.%m%d.%H%M)
           VERSION_NAME="$DATE_VERSION"
-          # Version code: YYYYMMDDHHmm as integer (e.g., 202511121430)
-          VERSION_CODE=$(date -u +%Y%m%d%H%M)
+          # Version code: minutes since epoch (fits in 32-bit int, ~29M currently)
+          # Max int: 2147483647, stays valid until year ~6053
+          VERSION_CODE=$(( $(date +%s) / 60 ))
           echo "Auto-version: $VERSION_NAME (code: $VERSION_CODE)"
         fi
         
