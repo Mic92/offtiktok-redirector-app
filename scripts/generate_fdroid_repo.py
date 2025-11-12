@@ -335,19 +335,19 @@ def main() -> None:
         print("No valid APK files found")
         return
 
-    # Generate index.xml
+    # Generate index.xml in repo directory
     print("\nGenerating index.xml...")
     xml_root = generate_index_xml(apks_info)
     xml_string = minidom.parseString(ET.tostring(xml_root)).toprettyxml(indent="  ")
 
-    with open("index.xml", "w") as f:
+    with open(REPO_DIR / "index.xml", "w") as f:
         f.write(xml_string)
 
-    # Generate index-v1.json
+    # Generate index-v1.json in repo directory
     print("Generating index-v1.json...")
     json_data = generate_index_v1_json(apks_info)
 
-    with open("index-v1.json", "w") as f:
+    with open(REPO_DIR / "index-v1.json", "w") as f:
         json.dump(json_data, f, indent=2)
 
     print(
