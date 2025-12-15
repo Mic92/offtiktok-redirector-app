@@ -115,14 +115,14 @@ jobs:
 
     - name: Upload Debug APK
       if: steps.version.outputs.should_deploy == 'false'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
 
     - name: Upload Release APK
       if: steps.version.outputs.should_deploy == 'true'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: app-release-${{ steps.version.outputs.version_name }}
         path: app/build/outputs/apk/release/offtiktok-redirector-${{ steps.version.outputs.version_name }}.apk
